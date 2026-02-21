@@ -2,12 +2,14 @@ import { model, indexName } from '../utils/constants';
 import { InternalServerError } from '../utils/types';
 import { PineconeDbClient } from '../utils/pinecone';
 import { AICohereClientV2 } from '../utils/cohere';
+import { GoogleGenAIClient } from '../utils/gemini';
 
 export interface SearchResult {
   id: string;
   score: number;
   gcsUrl?: string;
   metadata?: Record<string, any>;
+  answer?: string;
 }
 
 // Activity: Search for similar vectors in Pinecone using query embedding
@@ -17,7 +19,7 @@ export async function searchSimilarVectors(
   userId: string,
   orgId: string,
   topK: number = 5
-): Promise<SearchResult[]> {
+): Promise<{ results: SearchResult[], answer: string }> {
   try {
     console.log('[Activity] Starting vector search for query:', { 
       query, 
@@ -36,6 +38,8 @@ export async function searchSimilarVectors(
       outputDimension: 1536
     });
 
+    console.log('[Activity] Response:', response);
+
     // Extract embedding from response
     let queryEmbedding: number[] | undefined;
     if (Array.isArray(response.embeddings)) {
@@ -52,14 +56,13 @@ export async function searchSimilarVectors(
 
     // Search in Pinecone
     const index = PineconeDbClient.index(indexName);
-    const searchResults = await index.namespace(namespace).query({
+    const searchResults = await index.query({
       vector: queryEmbedding,
       topK: topK,
-      // filter: {
-      //   userId: userId,
-      //   orgId: orgId,
-      //   namespace: namespace,
-      // },
+      filter: {
+        userId: userId,
+        orgId: orgId,
+      },
       includeMetadata: true
     });
 
@@ -76,7 +79,21 @@ export async function searchSimilarVectors(
       topScore: results[0]?.score || 0
     });
 
-    return results;
+    const prompt = `
+    Extract the financial data from this image into a structured humanily interactive chat. 
+
+      Rules:
+      1. ABSOLUTE VALUES ONLY: Even if a number is in parentheses like "(141)" or "(38)", you MUST extract it as a positive number (e.g., 141, 38). Do not include negative signs.
+      2. Treat hyphens "-" or "N/A" as 0.
+      3. Map the columns strictly as follows: [AdRise, Data Product, Data Science, Research & Development, Total].
+      4. Ensure the "Category" matches the row labels on the left.
+      5. Provide the output in valid humanily interactive chat format.
+      The question is: ${query}
+    `;
+
+    const reasoningResponse = await new GoogleGenAIClient('gemini-2.5-pro', 'fox-et-video-intel-dev', 'us-west4').runModelWithObject(results[0].gcsUrl!, prompt);
+    console.log('[Activity] Reasoning response:', reasoningResponse);
+    return { results, answer: reasoningResponse as unknown as string };
 
   } catch (error) {
     console.error('[Activity] Vector search error:', error);

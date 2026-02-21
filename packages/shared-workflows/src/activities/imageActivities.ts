@@ -28,9 +28,11 @@ export async function embedImageAndStoreInPinecone(
     if (Array.isArray(response.embeddings)) {
       // Case: number[][]
       embedding = response.embeddings[0];
+      console.log('[Activity] Embedding:', embedding);
     } else if (response.embeddings && Array.isArray(response.embeddings.float)) {
       // Case: { float: number[][] }
       embedding = response.embeddings.float[0];
+      console.log('[Activity] Embedding:', embedding);
     }
 
     if (!embedding) {
@@ -43,7 +45,8 @@ export async function embedImageAndStoreInPinecone(
     }
 
     // Upsert to Pinecone with metadata
-    const index = PineconeDbClient.index(indexName);
+    const index = PineconeDbClient.index("testing");
+    console.log('[Activity] Index:', index);
     const vector = {
       id: `${orgId}-${userId}-${Date.now()}-${Math.random().toString(36).slice(2)}`,
       values: embedding,
@@ -56,8 +59,8 @@ export async function embedImageAndStoreInPinecone(
         createdAt: new Date().toISOString(),
       },
     };
-
-    await index.namespace(namespace).upsert([vector]);
+    console.log('[Activity] Vector:', vector);
+    await index.upsert([vector]);
     console.log('[Activity] Successfully upserted image to Pinecone:', vector.id);
 
   } catch (error) {

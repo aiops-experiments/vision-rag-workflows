@@ -6,6 +6,10 @@
     "scripts": {
       "clean": "rm -rf dist tsconfig.tsbuildinfo",
       "build": "npm run clean && tsc -b --force"
+    },
+    "dependencies": {
+      "@google/genai": "~1.23.0",
+      "@google-cloud/storage": "^7.16.0"
     }
   }
   

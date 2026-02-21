@@ -22,6 +22,7 @@ export interface SearchWorkflowResult {
   results: activities.SearchResult[];
   query: string;
   totalResults: number;
+  answer: string;
 }
 
 export async function SearchWorkflow(input: SearchWorkflowInput): Promise<SearchWorkflowResult> {
@@ -43,14 +44,15 @@ export async function SearchWorkflow(input: SearchWorkflowInput): Promise<Search
     );
 
     log.info('[SearchWorkflow] Search completed successfully', {
-      resultsCount: results.length,
-      topScore: results[0]?.score || 0
+      resultsCount: results.results.length,
+      topScore: results.results[0]?.score || 0
     });
 
     return {
-      results,
+      results: results.results,
       query: input.query,
-      totalResults: results.length
+      totalResults: results.results.length,
+      answer: results.answer || '',
     };
   } catch (error) {
     log.error('[SearchWorkflow] Failed to complete search', { error });
