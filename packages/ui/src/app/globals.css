@@ -1,22 +1,40 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Lora:ital,wght@0,400;0,500;1,400&display=swap');
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 :root {
-  --bg-deep:         #2d3a31;
-  --bg-primary:      #3d5043;
-  --bg-card:         #465a4c;
-  --bg-input:        #3f5244;
-  --border:          #5a7060;
-  --border-dim:      #4d6256;
-  --accent:          #c9a882;
-  --accent-dim:      #b89670;
-  --text-primary:    #ffffff;
-  --text-secondary:  #c4cfc6;
-  --text-muted:      #8a9e91;
-  --scrollbar-track: #2d3a31;
-  --scrollbar-thumb: #5a7060;
+  /* ── Dark blue + black palette ─────────────────────────── */
+  --bg-deep:         #08090D;
+  --bg-primary:      #0C0E14;
+  --bg-surface:      #13151D;
+  --bg-card:         #1A1D27;
+  --bg-card-glass:   rgba(26, 29, 39, 0.6);
+  --bg-input:        #13151D;
+  --bg-overlay:      rgba(8, 9, 13, 0.85);
+
+  --border:          rgba(200, 200, 210, 0.10);
+  --border-dim:      rgba(200, 200, 210, 0.06);
+  --border-focus:    rgba(200, 200, 210, 0.25);
+
+  --accent:          #D1D5DB;
+  --accent-light:    #E5E7EB;
+  --accent-dim:      #9CA3AF;
+  --accent-glow:     rgba(209, 213, 219, 0.2);
+
+  --text-primary:    #F0F0EC;
+  --text-secondary:  #8A8A88;
+  --text-muted:      #5A5A58;
+
+  --shadow-card:     0 4px 24px rgba(0, 0, 0, 0.5);
+  --shadow-glow:     0 0 40px rgba(209, 213, 219, 0.1);
+
+  --scrollbar-track: #08090D;
+  --scrollbar-thumb: #1A1D27;
+
+  --transition-fast:  150ms ease;
+  --transition-base:  300ms ease-out;
+  --transition-slow:  600ms cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -25,8 +43,9 @@ html, body {
   height: 100%;
   background-color: var(--bg-primary);
   color: var(--text-primary);
-  font-family: 'Inter', system-ui, sans-serif;
+  font-family: 'Inter', 'Geist', system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 /* ── Scrollbar ───────────────────────────────────────────── */
@@ -35,122 +54,118 @@ html, body {
 ::-webkit-scrollbar-thumb { background: var(--scrollbar-thumb); border-radius: 3px; }
 ::-webkit-scrollbar-thumb:hover { background: var(--accent-dim); }
 
-/* ── macOS-style buttons ─────────────────────────────────── */
+/* ── Buttons — flat, minimal, dusty white ────────────────── */
 @layer components {
-  /* Primary: dusty light-brown gradient, white text */
-  .btn-macos {
+  .btn-eden {
     @apply relative inline-flex items-center justify-center gap-2 font-medium text-sm
-           select-none transition-all duration-100 cursor-pointer;
-    border-radius: 7px;
+           select-none cursor-pointer;
+    border-radius: 8px;
+    transition: background-color var(--transition-fast), color var(--transition-fast),
+                border-color var(--transition-fast), box-shadow var(--transition-fast),
+                transform 100ms ease;
   }
 
-  .btn-macos-primary {
-    background: linear-gradient(to bottom, #d4b490, #c09470);
-    border: 1px solid #9a7448;
-    box-shadow:
-      inset 0 1px 0 rgba(255,255,255,0.22),
-      0 1px 3px rgba(0,0,0,0.30);
-    color: #fff;
-    text-shadow: 0 1px 1px rgba(0,0,0,0.18);
+  /* Primary: solid dusty white bg, dark text */
+  .btn-eden-primary {
+    background-color: var(--accent);
+    color: var(--bg-deep);
+    border: 1px solid transparent;
+    font-weight: 600;
   }
-  .btn-macos-primary:hover:not(:disabled) {
-    background: linear-gradient(to bottom, #dcc09c, #c89a78);
-    box-shadow:
-      inset 0 1px 0 rgba(255,255,255,0.28),
-      0 2px 5px rgba(0,0,0,0.32);
+  .btn-eden-primary:hover:not(:disabled) {
+    background-color: var(--accent-light);
+    box-shadow: 0 0 16px rgba(209, 213, 219, 0.15);
+    transform: translateY(-1px);
   }
-  .btn-macos-primary:active:not(:disabled) {
-    background: linear-gradient(to bottom, #b88c60, #c09470);
-    box-shadow: inset 0 1px 3px rgba(0,0,0,0.25);
-    transform: translateY(0.5px);
+  .btn-eden-primary:active:not(:disabled) {
+    background-color: var(--accent-dim);
+    box-shadow: none;
+    transform: translateY(0);
   }
-  .btn-macos-primary:disabled {
-    opacity: 0.42;
+  .btn-eden-primary:disabled {
+    opacity: 0.4;
     cursor: not-allowed;
   }
 
-  /* Secondary: near-white gradient, brown border + text */
-  .btn-macos-secondary {
-    background: linear-gradient(to bottom, #f7f2eb, #ede4d6);
-    border: 1px solid #c4a882;
-    box-shadow:
-      inset 0 1px 0 rgba(255,255,255,0.90),
-      0 1px 2px rgba(0,0,0,0.14);
-    color: #6b4c28;
+  /* Secondary: transparent bg, subtle border, gray text */
+  .btn-eden-secondary {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--text-secondary);
   }
-  .btn-macos-secondary:hover:not(:disabled) {
-    background: linear-gradient(to bottom, #fff8f0, #f0e4d0);
-    box-shadow:
-      inset 0 1px 0 rgba(255,255,255,0.95),
-      0 2px 4px rgba(0,0,0,0.16);
+  .btn-eden-secondary:hover:not(:disabled) {
+    border-color: var(--accent-dim);
+    color: var(--accent);
+    background: rgba(209, 213, 219, 0.04);
   }
-  .btn-macos-secondary:active:not(:disabled) {
-    background: linear-gradient(to bottom, #e8d8c0, #f0e4d0);
-    box-shadow: inset 0 1px 2px rgba(0,0,0,0.18);
+  .btn-eden-secondary:active:not(:disabled) {
+    background: rgba(209, 213, 219, 0.06);
     transform: translateY(0.5px);
   }
-  .btn-macos-secondary:disabled {
-    opacity: 0.42;
+  .btn-eden-secondary:disabled {
+    opacity: 0.4;
     cursor: not-allowed;
   }
 
-  /* Icon-only circular variant (send / upload buttons in InputBar) */
-  .btn-macos-icon-primary {
-    background: linear-gradient(to bottom, #d4b490, #c09470);
-    border: 1px solid #9a7448;
-    box-shadow:
-      inset 0 1px 0 rgba(255,255,255,0.22),
-      0 1px 3px rgba(0,0,0,0.28);
-    color: #fff;
+  /* Icon-only primary (send button) */
+  .btn-eden-icon-primary {
+    background-color: var(--accent);
+    color: var(--bg-deep);
+    border: none;
     border-radius: 8px;
+    transition: background-color var(--transition-fast), box-shadow var(--transition-fast),
+                transform 100ms ease;
   }
-  .btn-macos-icon-primary:hover:not(:disabled) {
-    background: linear-gradient(to bottom, #dcc09c, #c89a78);
+  .btn-eden-icon-primary:hover:not(:disabled) {
+    background-color: var(--accent-light);
+    box-shadow: 0 0 12px rgba(209, 213, 219, 0.2);
   }
-  .btn-macos-icon-primary:active:not(:disabled) {
-    background: linear-gradient(to bottom, #b88c60, #c09470);
-    box-shadow: inset 0 1px 3px rgba(0,0,0,0.22);
+  .btn-eden-icon-primary:active:not(:disabled) {
+    background-color: var(--accent-dim);
+    box-shadow: none;
     transform: translateY(0.5px);
   }
-  .btn-macos-icon-primary:disabled { opacity: 0.42; cursor: not-allowed; }
+  .btn-eden-icon-primary:disabled { opacity: 0.4; cursor: not-allowed; }
 
-  .btn-macos-icon-secondary {
-    background: linear-gradient(to bottom, #f0ebe3, #e4dbd0);
-    border: 1px solid #c4a882;
-    box-shadow:
-      inset 0 1px 0 rgba(255,255,255,0.80),
-      0 1px 2px rgba(0,0,0,0.14);
-    color: #7a5c38;
+  /* Icon-only secondary (upload button) */
+  .btn-eden-icon-secondary {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--text-secondary);
     border-radius: 8px;
+    transition: border-color var(--transition-fast), color var(--transition-fast),
+                background-color var(--transition-fast);
   }
-  .btn-macos-icon-secondary:hover:not(:disabled) {
-    background: linear-gradient(to bottom, #f8f0e4, #eddfc8);
+  .btn-eden-icon-secondary:hover:not(:disabled) {
+    border-color: var(--accent-dim);
+    color: var(--accent);
+    background: rgba(209, 213, 219, 0.04);
   }
-  .btn-macos-icon-secondary:active:not(:disabled) {
-    box-shadow: inset 0 1px 2px rgba(0,0,0,0.18);
-    transform: translateY(0.5px);
+  .btn-eden-icon-secondary:active:not(:disabled) {
+    background: rgba(209, 213, 219, 0.06);
   }
-  .btn-macos-icon-secondary:disabled { opacity: 0.42; cursor: not-allowed; }
+  .btn-eden-icon-secondary:disabled { opacity: 0.4; cursor: not-allowed; }
 }
 
-/* ── Prose rendering for Gemini markdown ─────────────────── */
+/* ── Prose rendering for AI markdown responses ───────────── */
 .prose-eden {
   @apply text-eden-text-secondary leading-relaxed;
 }
 .prose-eden h1, .prose-eden h2, .prose-eden h3 {
-  @apply text-white font-semibold mt-4 mb-2;
+  color: var(--text-primary);
+  @apply font-semibold mt-4 mb-2;
 }
 .prose-eden p { @apply mb-3; }
 .prose-eden ul, .prose-eden ol { @apply ml-5 mb-3; }
 .prose-eden li { @apply mb-1; }
 .prose-eden table { @apply w-full border-collapse text-sm mb-4; }
 .prose-eden th {
-  @apply bg-eden-border text-white text-left px-3 py-2;
+  @apply bg-eden-bg-card text-eden-text-primary text-left px-3 py-2;
 }
 .prose-eden td {
   @apply border border-eden-border-dim px-3 py-2 text-eden-text-secondary;
 }
-.prose-eden tr:nth-child(even) td { @apply bg-eden-bg-card; }
+.prose-eden tr:nth-child(even) td { @apply bg-eden-bg-surface; }
 .prose-eden code {
   @apply bg-eden-bg-deep px-1.5 py-0.5 rounded text-eden-accent text-xs font-mono;
 }
@@ -160,3 +175,51 @@ html, body {
 .prose-eden blockquote {
   @apply border-l-2 border-eden-accent pl-4 text-eden-text-muted italic mb-3;
 }
+
+/* ── Visual effects ──────────────────────────────────────── */
+
+/* Dusty white glow */
+.eden-glow {
+  box-shadow: 0 0 12px rgba(209, 213, 219, 0.1);
+}
+.eden-glow-strong {
+  box-shadow: 0 0 20px rgba(209, 213, 219, 0.18), 0 0 40px rgba(209, 213, 219, 0.06);
+}
+
+/* Glassmorphism card */
+.eden-glass {
+  background: var(--bg-card-glass);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-card);
+}
+
+/* Gradient mask fade-out (for section bottoms) */
+.eden-fade-mask {
+  -webkit-mask-image: linear-gradient(#000 0%, #0000 98%);
+  mask-image: linear-gradient(#000 0%, #0000 98%);
+}
+
+/* Will-change hint for hover transforms */
+.eden-hover-ready {
+  will-change: transform;
+}
+
+/* Scroll-triggered appear animation (spring easing) */
+.eden-appear {
+  opacity: 0;
+  transform: translateY(20px);
+  transition: opacity 0.6s cubic-bezier(0.16, 1, 0.3, 1),
+              transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.eden-appear.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Stagger animation delays */
+.eden-stagger-1 { animation-delay: 0ms; }
+.eden-stagger-2 { animation-delay: 80ms; }
+.eden-stagger-3 { animation-delay: 160ms; }
+.eden-stagger-4 { animation-delay: 240ms; }

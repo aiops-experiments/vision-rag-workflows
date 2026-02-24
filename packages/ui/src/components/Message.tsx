@@ -21,11 +21,11 @@ export default function Message({ msg }: { msg: TMessage }) {
   const isUser = msg.role === 'user';
 
   return (
-    <div className={`flex gap-3 w-full animate-slide-up ${isUser ? 'justify-end' : 'justify-start'}`}>
+    <div className={`flex gap-3 w-full animate-fade-in-up ${isUser ? 'justify-end' : 'justify-start'}`}>
       {/* Avatar */}
       {!isUser && (
-        <div className="flex-shrink-0 w-8 h-8 rounded-full bg-eden-accent flex items-center justify-center mt-1">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#052415" strokeWidth="2.5">
+        <div className="flex-shrink-0 w-8 h-8 rounded-full bg-eden-accent/15 border border-eden-accent/30 flex items-center justify-center mt-1 text-eden-accent">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
             <circle cx="11" cy="11" r="8" />
             <path d="m21 21-4.3-4.3" />
           </svg>
@@ -37,8 +37,8 @@ export default function Message({ msg }: { msg: TMessage }) {
         <div
           className={`rounded-2xl px-4 py-3 text-sm leading-relaxed ${
             isUser
-              ? 'bg-eden-border text-white rounded-tr-sm'
-              : 'bg-eden-bg-card text-eden-text-secondary rounded-tl-sm border border-eden-border-dim'
+              ? 'bg-eden-bg-card text-eden-text-primary rounded-tr-sm'
+              : 'eden-glass text-eden-text-secondary rounded-tl-sm'
           }`}
         >
           {msg.loading ? (

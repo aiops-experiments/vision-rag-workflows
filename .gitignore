@@ -8,7 +8,10 @@ yarn-error.log*
 dist/
 build/
 **/*.d.ts
+**/*.d.ts.map
 **/*.js
+**/*.js.map
+tsconfig.tsbuildinfo
 
 # Environment variables
 .env

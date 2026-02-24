@@ -39,15 +39,17 @@ export default function InputBar({ onSend, disabled, onUpload }: Props) {
       <div className="max-w-3xl mx-auto">
         <div
           className="flex items-end gap-3 bg-eden-bg-input border border-eden-border
-                     rounded-2xl px-4 py-3 focus-within:border-eden-accent transition-colors"
+                     rounded-2xl px-4 py-3 focus-within:border-eden-accent
+                     focus-within:shadow-[0_0_12px_rgba(209,213,219,0.1)]
+                     transition-all duration-200"
         >
-          {/* Upload — macOS secondary (cream) */}
+          {/* Upload button */}
           <button
             type="button"
             onClick={onUpload}
             disabled={disabled}
             title="Embed document"
-            className="btn-macos-icon-secondary flex-shrink-0 w-9 h-9 flex items-center justify-center mb-0.5"
+            className="btn-eden-icon-secondary flex-shrink-0 w-9 h-9 flex items-center justify-center mb-0.5"
           >
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <path strokeLinecap="round" strokeLinejoin="round"
@@ -64,21 +66,21 @@ export default function InputBar({ onSend, disabled, onUpload }: Props) {
             onChange={(e) => { setValue(e.target.value); handleInput(); }}
             onKeyDown={handleKey}
             placeholder="Ask anything about your documents..."
-            className="flex-1 bg-transparent text-white placeholder-eden-text-muted text-sm
+            className="flex-1 bg-transparent text-eden-text-primary placeholder-eden-text-muted text-sm
                        outline-none resize-none leading-relaxed max-h-48 overflow-y-auto
                        disabled:opacity-50"
             style={{ minHeight: '24px' }}
           />
 
-          {/* Send — macOS primary (dusty brown) */}
+          {/* Send button */}
           <button
             type="button"
             onClick={send}
             disabled={disabled || !value.trim()}
-            className="btn-macos-icon-primary flex-shrink-0 w-9 h-9 flex items-center justify-center mb-0.5"
+            className="btn-eden-icon-primary flex-shrink-0 w-9 h-9 flex items-center justify-center mb-0.5"
           >
             {disabled ? (
-              <div className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />
+              <div className="w-4 h-4 border-2 border-eden-text-primary/40 border-t-eden-text-primary rounded-full animate-spin" />
             ) : (
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
                 <path strokeLinecap="round" strokeLinejoin="round"

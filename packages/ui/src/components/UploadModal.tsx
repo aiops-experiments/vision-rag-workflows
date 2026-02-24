@@ -61,29 +61,29 @@ export default function UploadModal({ config, onClose, onSuccess }: Props) {
   return (
     <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/70 backdrop-blur-sm animate-fade-in">
       <div
-        className="w-full max-w-md bg-eden-bg-card border border-eden-border rounded-2xl shadow-2xl
+        className="w-full max-w-md eden-glass rounded-2xl
                    p-6 flex flex-col gap-5 animate-slide-up"
       >
         {/* Header */}
         <div className="flex items-center justify-between">
-          <h2 className="text-white font-semibold text-lg">Embed Document</h2>
+          <h2 className="text-eden-text-primary font-semibold text-lg">Embed Document</h2>
           <button
             onClick={onClose}
-            className="btn-macos btn-macos-secondary w-7 h-7 flex items-center justify-center
+            className="btn-eden btn-eden-secondary w-7 h-7 flex items-center justify-center
                        text-xs !px-0 !py-0"
           >
             ✕
           </button>
         </div>
 
-        {/* Tabs — macOS segmented style */}
+        {/* Tabs — segmented style */}
         <div className="flex gap-1.5 bg-eden-bg-deep rounded-xl p-1">
           {(['pdf', 'image'] as Tab[]).map((t) => (
             <button
               key={t}
               onClick={() => setTab(t)}
-              className={`btn-macos flex-1 py-2 text-sm ${
-                tab === t ? 'btn-macos-primary' : 'btn-macos-secondary'
+              className={`btn-eden flex-1 py-2 text-sm ${
+                tab === t ? 'btn-eden-primary' : 'btn-eden-secondary'
               }`}
             >
               {t === 'pdf' ? '📄 PDF' : '🖼 Image URL'}
@@ -101,7 +101,7 @@ export default function UploadModal({ config, onClose, onSuccess }: Props) {
               onChange={(e) => setImageUrl(e.target.value)}
               placeholder="https://example.com/image.jpg"
               className="bg-eden-bg-input border border-eden-border rounded-xl px-4 py-3
-                         text-white placeholder-eden-text-muted text-sm outline-none
+                         text-eden-text-primary placeholder-eden-text-muted text-sm outline-none
                          focus:border-eden-accent transition-colors"
             />
           </div>
@@ -130,7 +130,7 @@ export default function UploadModal({ config, onClose, onSuccess }: Props) {
             {pdfFile ? (
               <>
                 <span className="text-3xl">📄</span>
-                <span className="text-sm text-white font-medium">{pdfFile.name}</span>
+                <span className="text-sm text-eden-text-primary font-medium">{pdfFile.name}</span>
                 <span className="text-xs text-eden-text-muted">
                   {(pdfFile.size / 1024 / 1024).toFixed(2)} MB
                 </span>
@@ -165,13 +165,13 @@ export default function UploadModal({ config, onClose, onSuccess }: Props) {
 
         {/* Actions */}
         <div className="flex gap-3">
-          <button onClick={onClose} className="btn-macos btn-macos-secondary flex-1 py-3">
+          <button onClick={onClose} className="btn-eden btn-eden-secondary flex-1 py-3">
             Cancel
           </button>
           <button
             onClick={handleSubmit}
             disabled={!canSubmit}
-            className="btn-macos btn-macos-primary flex-1 py-3"
+            className="btn-eden btn-eden-primary flex-1 py-3"
           >
             Embed
           </button>

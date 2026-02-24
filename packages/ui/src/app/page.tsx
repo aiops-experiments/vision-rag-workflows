@@ -8,6 +8,7 @@ import MessageComponent from '@/components/Message';
 import InputBar from '@/components/InputBar';
 import Sidebar from '@/components/Sidebar';
 import UploadModal from '@/components/UploadModal';
+import ParticleBackground from '@/components/ParticleBackground';
 
 interface Config {
   namespace: string;
@@ -21,40 +22,48 @@ const DEFAULT_CONFIG: Config = {
   orgId: 'org-456',
 };
 
+const HINTS = [
+  'What are the Q2 revenue figures?',
+  'Show me the cost breakdown',
+  'What trends appear in this data?',
+  'Summarise the key metrics',
+];
+
 function EmptyState() {
   return (
-    <div className="flex-1 flex flex-col items-center justify-center gap-6 px-8 text-center">
+    <div className="relative flex-1 flex flex-col items-center justify-center gap-6 px-8 text-center">
+      {/* Ambient particles */}
+      <ParticleBackground count={30} />
+
       {/* Search icon */}
-      <div className="w-16 h-16 rounded-2xl bg-eden-accent/15 border border-eden-accent/30
-                      flex items-center justify-center">
+      <div className="relative z-10 w-16 h-16 rounded-2xl bg-eden-accent/10 border border-eden-accent/20
+                      flex items-center justify-center text-eden-accent">
         <svg width="28" height="28" viewBox="0 0 24 24" fill="none"
-          stroke="#c9a882" strokeWidth="1.8">
+          stroke="currentColor" strokeWidth="1.8">
           <circle cx="11" cy="11" r="8" />
           <path d="m21 21-4.3-4.3" />
         </svg>
       </div>
 
-      <div>
-        <h1 className="text-white text-2xl font-semibold mb-2">Vision RAG</h1>
+      <div className="relative z-10">
+        <h1 className="text-eden-text-primary text-2xl font-semibold mb-2">Vision RAG</h1>
         <p className="text-eden-text-secondary text-sm max-w-sm leading-relaxed">
           Ask questions about your documents. Results include the relevant pages as
           images alongside a structured AI-generated answer.
         </p>
       </div>
 
-      {/* Hint chips */}
-      <div className="grid grid-cols-2 gap-3 w-full max-w-sm">
-        {[
-          'What are the Q2 revenue figures?',
-          'Show me the cost breakdown',
-          'What trends appear in this data?',
-          'Summarise the key metrics',
-        ].map((hint) => (
+      {/* Hint chips with glassmorphism */}
+      <div className="relative z-10 grid grid-cols-2 gap-3 w-full max-w-sm">
+        {HINTS.map((hint, i) => (
           <div
             key={hint}
-            className="px-4 py-3 rounded-xl border border-eden-border bg-eden-bg-card
+            className={`eden-glass px-4 py-3 rounded-xl
                        text-eden-text-secondary text-xs text-left leading-relaxed
-                       hover:border-eden-accent/60 hover:text-white cursor-default transition-all"
+                       hover:border-eden-border-focus hover:text-eden-text-primary cursor-default
+                       transition-all duration-200
+                       hover:shadow-[0_0_12px_rgba(209,213,219,0.06)] eden-hover-ready
+                       animate-spring-in eden-stagger-${i + 1}`}
           >
             {hint}
           </div>
@@ -124,7 +133,7 @@ export default function ChatPage() {
   }
 
   return (
-    <div className="flex h-screen overflow-hidden bg-eden-bg-primary text-white">
+    <div className="flex h-screen overflow-hidden bg-eden-bg-primary text-eden-text-primary">
       <Sidebar
         messages={messages}
         config={config}
@@ -179,9 +188,9 @@ export default function ChatPage() {
       {/* Toast */}
       {uploadToast && (
         <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 animate-slide-up
-                        bg-eden-bg-card border border-eden-accent/30 text-eden-accent
-                        text-sm px-5 py-3 rounded-2xl shadow-xl">
-          ✓ {uploadToast}
+                        eden-glass text-eden-accent
+                        text-sm px-5 py-3 rounded-2xl">
+          {uploadToast}
         </div>
       )}
     </div>

@@ -30,7 +30,9 @@ function ImageCard({ result, onClick }: { result: ImageResult; onClick: () => vo
     <button
       onClick={onClick}
       className="group relative rounded-xl overflow-hidden border border-eden-border-dim hover:border-eden-accent
-                 transition-all duration-200 bg-eden-bg-card aspect-[4/3] w-full"
+                 transition-all duration-200 bg-eden-bg-card aspect-[4/3] w-full eden-hover-ready
+                 hover:shadow-[0_0_16px_rgba(209,213,219,0.08)]
+                 shadow-[0_4px_24px_rgba(0,0,0,0.4)]"
     >
       {!loaded && !error && (
         <div className="absolute inset-0 flex items-center justify-center">
@@ -99,13 +101,12 @@ export default function ImageGallery({ images }: Props) {
           onClick={() => setLightbox(null)}
         >
           <div
-            className="relative max-w-4xl max-h-[90vh] p-4 bg-eden-bg-card rounded-2xl
-                       border border-eden-border shadow-2xl animate-slide-up"
+            className="relative max-w-4xl max-h-[90vh] p-4 eden-glass rounded-2xl animate-slide-up"
             onClick={(e) => e.stopPropagation()}
           >
             <button
               onClick={() => setLightbox(null)}
-              className="absolute top-3 right-3 text-eden-text-muted hover:text-white
+              className="absolute top-3 right-3 text-eden-text-muted hover:text-eden-text-primary
                          transition-colors w-8 h-8 flex items-center justify-center
                          rounded-full bg-eden-bg-primary"
             >
@@ -119,9 +120,9 @@ export default function ImageGallery({ images }: Props) {
             />
             <div className="mt-3 flex items-center gap-3">
               <ScoreBadge score={lightbox.score} />
-              {lightbox.metadata?.['createdAt'] && (
+              {lightbox.metadata && typeof lightbox.metadata === 'object' && 'createdAt' in lightbox.metadata && (
                 <span className="text-xs text-eden-text-muted">
-                  {new Date(lightbox.metadata['createdAt'] as string).toLocaleDateString()}
+                  {new Date(String((lightbox.metadata as Record<string, unknown>)['createdAt'])).toLocaleDateString()}
                 </span>
               )}
             </div>
