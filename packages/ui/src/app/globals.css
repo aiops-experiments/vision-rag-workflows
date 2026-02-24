@@ -1,0 +1,162 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --bg-deep:         #2d3a31;
+  --bg-primary:      #3d5043;
+  --bg-card:         #465a4c;
+  --bg-input:        #3f5244;
+  --border:          #5a7060;
+  --border-dim:      #4d6256;
+  --accent:          #c9a882;
+  --accent-dim:      #b89670;
+  --text-primary:    #ffffff;
+  --text-secondary:  #c4cfc6;
+  --text-muted:      #8a9e91;
+  --scrollbar-track: #2d3a31;
+  --scrollbar-thumb: #5a7060;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+  height: 100%;
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  font-family: 'Inter', system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ── Scrollbar ───────────────────────────────────────────── */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: var(--scrollbar-track); }
+::-webkit-scrollbar-thumb { background: var(--scrollbar-thumb); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--accent-dim); }
+
+/* ── macOS-style buttons ─────────────────────────────────── */
+@layer components {
+  /* Primary: dusty light-brown gradient, white text */
+  .btn-macos {
+    @apply relative inline-flex items-center justify-center gap-2 font-medium text-sm
+           select-none transition-all duration-100 cursor-pointer;
+    border-radius: 7px;
+  }
+
+  .btn-macos-primary {
+    background: linear-gradient(to bottom, #d4b490, #c09470);
+    border: 1px solid #9a7448;
+    box-shadow:
+      inset 0 1px 0 rgba(255,255,255,0.22),
+      0 1px 3px rgba(0,0,0,0.30);
+    color: #fff;
+    text-shadow: 0 1px 1px rgba(0,0,0,0.18);
+  }
+  .btn-macos-primary:hover:not(:disabled) {
+    background: linear-gradient(to bottom, #dcc09c, #c89a78);
+    box-shadow:
+      inset 0 1px 0 rgba(255,255,255,0.28),
+      0 2px 5px rgba(0,0,0,0.32);
+  }
+  .btn-macos-primary:active:not(:disabled) {
+    background: linear-gradient(to bottom, #b88c60, #c09470);
+    box-shadow: inset 0 1px 3px rgba(0,0,0,0.25);
+    transform: translateY(0.5px);
+  }
+  .btn-macos-primary:disabled {
+    opacity: 0.42;
+    cursor: not-allowed;
+  }
+
+  /* Secondary: near-white gradient, brown border + text */
+  .btn-macos-secondary {
+    background: linear-gradient(to bottom, #f7f2eb, #ede4d6);
+    border: 1px solid #c4a882;
+    box-shadow:
+      inset 0 1px 0 rgba(255,255,255,0.90),
+      0 1px 2px rgba(0,0,0,0.14);
+    color: #6b4c28;
+  }
+  .btn-macos-secondary:hover:not(:disabled) {
+    background: linear-gradient(to bottom, #fff8f0, #f0e4d0);
+    box-shadow:
+      inset 0 1px 0 rgba(255,255,255,0.95),
+      0 2px 4px rgba(0,0,0,0.16);
+  }
+  .btn-macos-secondary:active:not(:disabled) {
+    background: linear-gradient(to bottom, #e8d8c0, #f0e4d0);
+    box-shadow: inset 0 1px 2px rgba(0,0,0,0.18);
+    transform: translateY(0.5px);
+  }
+  .btn-macos-secondary:disabled {
+    opacity: 0.42;
+    cursor: not-allowed;
+  }
+
+  /* Icon-only circular variant (send / upload buttons in InputBar) */
+  .btn-macos-icon-primary {
+    background: linear-gradient(to bottom, #d4b490, #c09470);
+    border: 1px solid #9a7448;
+    box-shadow:
+      inset 0 1px 0 rgba(255,255,255,0.22),
+      0 1px 3px rgba(0,0,0,0.28);
+    color: #fff;
+    border-radius: 8px;
+  }
+  .btn-macos-icon-primary:hover:not(:disabled) {
+    background: linear-gradient(to bottom, #dcc09c, #c89a78);
+  }
+  .btn-macos-icon-primary:active:not(:disabled) {
+    background: linear-gradient(to bottom, #b88c60, #c09470);
+    box-shadow: inset 0 1px 3px rgba(0,0,0,0.22);
+    transform: translateY(0.5px);
+  }
+  .btn-macos-icon-primary:disabled { opacity: 0.42; cursor: not-allowed; }
+
+  .btn-macos-icon-secondary {
+    background: linear-gradient(to bottom, #f0ebe3, #e4dbd0);
+    border: 1px solid #c4a882;
+    box-shadow:
+      inset 0 1px 0 rgba(255,255,255,0.80),
+      0 1px 2px rgba(0,0,0,0.14);
+    color: #7a5c38;
+    border-radius: 8px;
+  }
+  .btn-macos-icon-secondary:hover:not(:disabled) {
+    background: linear-gradient(to bottom, #f8f0e4, #eddfc8);
+  }
+  .btn-macos-icon-secondary:active:not(:disabled) {
+    box-shadow: inset 0 1px 2px rgba(0,0,0,0.18);
+    transform: translateY(0.5px);
+  }
+  .btn-macos-icon-secondary:disabled { opacity: 0.42; cursor: not-allowed; }
+}
+
+/* ── Prose rendering for Gemini markdown ─────────────────── */
+.prose-eden {
+  @apply text-eden-text-secondary leading-relaxed;
+}
+.prose-eden h1, .prose-eden h2, .prose-eden h3 {
+  @apply text-white font-semibold mt-4 mb-2;
+}
+.prose-eden p { @apply mb-3; }
+.prose-eden ul, .prose-eden ol { @apply ml-5 mb-3; }
+.prose-eden li { @apply mb-1; }
+.prose-eden table { @apply w-full border-collapse text-sm mb-4; }
+.prose-eden th {
+  @apply bg-eden-border text-white text-left px-3 py-2;
+}
+.prose-eden td {
+  @apply border border-eden-border-dim px-3 py-2 text-eden-text-secondary;
+}
+.prose-eden tr:nth-child(even) td { @apply bg-eden-bg-card; }
+.prose-eden code {
+  @apply bg-eden-bg-deep px-1.5 py-0.5 rounded text-eden-accent text-xs font-mono;
+}
+.prose-eden pre {
+  @apply bg-eden-bg-deep rounded-lg p-4 overflow-x-auto mb-4;
+}
+.prose-eden blockquote {
+  @apply border-l-2 border-eden-accent pl-4 text-eden-text-muted italic mb-3;
+}

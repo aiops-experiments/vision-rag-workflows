@@ -2,9 +2,11 @@ import { Client, WorkflowHandle } from '@temporalio/client';
 import { NativeConnection } from '@temporalio/worker';
 import { ImageEmbedWorkflow, SearchWorkflow } from '@vision-rag/shared-workflows';
 
-// Import workflow types
 export interface ImageEmbedWorkflowInput {
-  gcsUrl: string;
+  /** Protocol URL: gs:// or s3:// */
+  storageUrl: string;
+  /** Public HTTP URL for browser rendering */
+  imageUrl: string;
   base64: string;
   userId: string;
   namespace: string;
@@ -13,7 +15,8 @@ export interface ImageEmbedWorkflowInput {
 
 export interface PdfEmbedWorkflowInput {
   pages: {
-    gcsUrl: string;
+    storageUrl: string;
+    imageUrl: string;
     base64: string;
     userId: string;
     namespace: string;
@@ -34,10 +37,14 @@ export interface SearchWorkflowResult {
   results: {
     id: string;
     score: number;
-    gcsUrl?: string;
-    metadata?: Record<string, any>;
+    /** Protocol URL: gs:// or s3:// */
+    storageUrl?: string;
+    /** Public HTTP URL for browser rendering */
+    imageUrl?: string;
+    metadata?: Record<string, unknown>;
   }[];
   query: string;
+  answer: string;
   totalResults: number;
 }
 
@@ -47,21 +54,21 @@ export class TemporalService {
 
   async getClient(namespace?: string): Promise<Client> {
     if (!this.client) {
-      const connection = await NativeConnection.connect({
-        address: 'localhost:7233',
-        // TLS and gRPC metadata configuration goes here.
-      });
+      const address =
+        process.env['TEMPORAL_SERVER_URL'] || 'localhost:7233';
+      const connection = await NativeConnection.connect({ address });
       this.client = new Client({
-        connection: connection,
-        namespace: namespace || 'default',
+        connection,
+        namespace: namespace || process.env['TEMPORAL_NAMESPACE'] || 'default',
       });
     }
     return this.client;
   }
 
-  async startImageEmbedWorkflow(input: ImageEmbedWorkflowInput): Promise<WorkflowHandle> {
+  async startImageEmbedWorkflow(
+    input: ImageEmbedWorkflowInput,
+  ): Promise<WorkflowHandle> {
     const client = await this.getClient(input.namespace);
-    
     return client.workflow.start(ImageEmbedWorkflow, {
       args: [input],
       taskQueue: this.taskQueue,
@@ -69,9 +76,10 @@ export class TemporalService {
     });
   }
 
-  async startPdfEmbedWorkflow(input: PdfEmbedWorkflowInput): Promise<WorkflowHandle> {
+  async startPdfEmbedWorkflow(
+    input: PdfEmbedWorkflowInput,
+  ): Promise<WorkflowHandle> {
     const client = await this.getClient();
-    
     return client.workflow.start('PdfEmbedWorkflow', {
       args: [input],
       taskQueue: this.taskQueue,
@@ -79,26 +87,25 @@ export class TemporalService {
     });
   }
 
-  async startSearchWorkflow(input: SearchWorkflowInput): Promise<SearchWorkflowResult> {
+  async startSearchWorkflow(
+    input: SearchWorkflowInput,
+  ): Promise<SearchWorkflowResult> {
     const client = await this.getClient();
-    
     const handle = await client.workflow.start(SearchWorkflow, {
       args: [input],
       taskQueue: this.taskQueue,
       workflowId: `search-${input.userId}-${input.orgId}-${Date.now()}`,
     });
-
-    // Wait for the workflow to complete and return the result
     return await handle.result();
   }
 
-  async getWorkflowResult(workflowId: string): Promise<any> {
+  async getWorkflowResult(workflowId: string): Promise<unknown> {
     const client = await this.getClient();
     const handle = client.workflow.getHandle(workflowId);
     return await handle.result();
   }
 
-  async getWorkflowStatus(workflowId: string): Promise<any> {
+  async getWorkflowStatus(workflowId: string): Promise<unknown> {
     const client = await this.getClient();
     const handle = client.workflow.getHandle(workflowId);
     return await handle.describe();

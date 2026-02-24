@@ -32,7 +32,10 @@ export interface SearchRequest {
 // Response types
 export interface EmbedResponse {
   workflowId: string;
-  gcsUrl?: string;
+  /** Protocol URL: gs:// or s3:// */
+  storageUrl?: string;
+  /** Public HTTP URL for browser rendering */
+  imageUrl?: string;
   status: 'processing' | 'completed' | 'failed';
   totalPages?: number;
 }
@@ -40,18 +43,22 @@ export interface EmbedResponse {
 export interface SearchResult {
   id: string;
   score: number;
+  /** Public HTTP URL for browser image rendering */
+  imageUrl?: string;
   metadata: {
-    gcsUrl?: string;
+    storageUrl?: string;
+    imageUrl?: string;
     pageNumber?: number;
     type?: string;
     createdAt?: string;
-    [key: string]: any;
+    [key: string]: unknown;
   };
 }
 
 export interface SearchResponse {
   results: SearchResult[];
   query: string;
+  answer: string;
   namespace: string;
   totalResults: number;
 }
@@ -59,7 +66,7 @@ export interface SearchResponse {
 export interface WorkflowStatusResponse {
   workflowId: string;
   status: string;
-  result?: any;
+  result?: unknown;
 }
 
 // Error class for internal server errors

@@ -9,7 +9,8 @@
     },
     "dependencies": {
       "@google/genai": "~1.23.0",
-      "@google-cloud/storage": "^7.16.0"
+      "@google-cloud/storage": "^7.16.0",
+      "@pinecone-database/pinecone": "^3.0.0"
     }
   }
   

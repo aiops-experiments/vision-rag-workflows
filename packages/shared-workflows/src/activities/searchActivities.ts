@@ -1,102 +1,106 @@
-import { model, indexName } from '../utils/constants';
-import { InternalServerError } from '../utils/types';
-import { PineconeDbClient } from '../utils/pinecone';
 import { AICohereClientV2 } from '../utils/cohere';
+import { getVectorDBProvider } from '../providers/vectordb';
 import { GoogleGenAIClient } from '../utils/gemini';
+import { InternalServerError } from '../utils/types';
 
 export interface SearchResult {
   id: string;
   score: number;
-  gcsUrl?: string;
-  metadata?: Record<string, any>;
+  /** Protocol URL: gs:// or s3:// */
+  storageUrl?: string;
+  /** Public HTTP URL for browser image rendering */
+  imageUrl?: string;
+  metadata?: Record<string, unknown>;
   answer?: string;
 }
 
-// Activity: Search for similar vectors in Pinecone using query embedding
+/**
+ * Activity: Embed a text query via Cohere, search the configured vector DB,
+ * then run Gemini over the top-matching image to produce a structured answer.
+ */
 export async function searchSimilarVectors(
   query: string,
   namespace: string,
   userId: string,
   orgId: string,
-  topK: number = 5
-): Promise<{ results: SearchResult[], answer: string }> {
-  try {
-    console.log('[Activity] Starting vector search for query:', { 
-      query, 
-      namespace, 
-      userId, 
-      orgId, 
-      topK 
-    });
+  topK: number = 5,
+): Promise<{ results: SearchResult[]; answer: string }> {
+  const indexName =
+    process.env['VECTOR_DB_INDEX_NAME'] ||
+    process.env['PINECONE_INDEX_NAME'] ||
+    'vision-rag';
 
-    // Generate embedding for the query using Cohere
-    const response = await AICohereClientV2.embed({
-      texts: [query],
-      model: model,
-      inputType: 'search_query',
-      embeddingTypes: ['float'],
-      outputDimension: 1536
-    });
+  console.log('[searchActivity] Starting vector search', { query, namespace, userId, orgId, topK });
 
-    console.log('[Activity] Response:', response);
+  // --- Embed query ---
+  const embedResponse = await AICohereClientV2.embed({
+    texts: [query],
+    model: process.env['COHERE_EMBED_MODEL'] || 'embed-v4.0',
+    inputType: 'search_query',
+    embeddingTypes: ['float'],
+    outputDimension: 1536,
+  });
 
-    // Extract embedding from response
-    let queryEmbedding: number[] | undefined;
-    if (Array.isArray(response.embeddings)) {
-      // Case: number[][]
-      queryEmbedding = response.embeddings;
-    } else if (response.embeddings && Array.isArray(response.embeddings.float)) {
-      // Case: { float: number[][] }
-      queryEmbedding = response.embeddings.float[0];
-    }
-
-    if (!queryEmbedding) {
-      throw new InternalServerError('No embeddings generated from Cohere for search query');
-    }
-
-    // Search in Pinecone
-    const index = PineconeDbClient.index(indexName);
-    const searchResults = await index.query({
-      vector: queryEmbedding,
-      topK: topK,
-      filter: {
-        userId: userId,
-        orgId: orgId,
-      },
-      includeMetadata: true
-    });
-
-    // Format results
-    const results: SearchResult[] = searchResults.matches?.map(match => ({
-      id: match.id || '',
-      score: match.score || 0,
-      gcsUrl: match.metadata?.['gcsUrl'] as string,
-      metadata: match.metadata || {}
-    })) || [];
-
-    console.log('[Activity] Search completed successfully:', { 
-      resultsCount: results.length,
-      topScore: results[0]?.score || 0
-    });
-
-    const prompt = `
-    Extract the financial data from this image into a structured humanily interactive chat. 
-
-      Rules:
-      1. ABSOLUTE VALUES ONLY: Even if a number is in parentheses like "(141)" or "(38)", you MUST extract it as a positive number (e.g., 141, 38). Do not include negative signs.
-      2. Treat hyphens "-" or "N/A" as 0.
-      3. Map the columns strictly as follows: [AdRise, Data Product, Data Science, Research & Development, Total].
-      4. Ensure the "Category" matches the row labels on the left.
-      5. Provide the output in valid humanily interactive chat format.
-      The question is: ${query}
-    `;
-
-    const reasoningResponse = await new GoogleGenAIClient('gemini-2.5-pro', 'fox-et-video-intel-dev', 'us-west4').runModelWithObject(results[0].gcsUrl!, prompt);
-    console.log('[Activity] Reasoning response:', reasoningResponse);
-    return { results, answer: reasoningResponse as unknown as string };
-
-  } catch (error) {
-    console.error('[Activity] Vector search error:', error);
-    throw new InternalServerError('Failed to search for similar vectors');
+  let queryEmbedding: number[] | undefined;
+  if (Array.isArray(embedResponse.embeddings)) {
+    queryEmbedding = embedResponse.embeddings as unknown as number[];
+  } else if (
+    embedResponse.embeddings &&
+    Array.isArray(embedResponse.embeddings.float)
+  ) {
+    queryEmbedding = embedResponse.embeddings.float[0];
   }
+
+  if (!queryEmbedding) {
+    throw new InternalServerError('No query embedding generated by Cohere');
+  }
+
+  // --- Query vector DB ---
+  const vectorDB = getVectorDBProvider();
+  const matches = await vectorDB.query(
+    indexName,
+    queryEmbedding,
+    { userId, orgId },
+    topK,
+  );
+
+  // Normalise results — handle both new metadata keys and legacy gcsUrl key
+  const results: SearchResult[] = matches.map((match) => {
+    const meta = match.metadata || {};
+    const storageUrl =
+      (meta['storageUrl'] as string) || (meta['gcsUrl'] as string) || '';
+    const imageUrl =
+      (meta['imageUrl'] as string) || (meta['gcsUrl'] as string) || '';
+    return { id: match.id, score: match.score, storageUrl, imageUrl, metadata: meta };
+  });
+
+  console.log('[searchActivity] Found', results.length, 'results, top score:', results[0]?.score);
+
+  // --- Gemini visual analysis on top result ---
+  const projectId = process.env['GCP_PROJECT_ID'] || '';
+  const region = process.env['GCP_REGION'] || 'us-central1';
+  const geminiModel = process.env['GEMINI_MODEL'] || 'gemini-2.5-pro';
+
+  const topStorageUrl = results[0]?.storageUrl || '';
+  const prompt = `
+    Analyse the content of this image and answer the following question in a clear, structured way
+    that is easy to read in a chat interface.
+    Rules:
+    1. Values in parentheses like "(141)" represent negatives — extract them as positive numbers.
+    2. Treat hyphens "-" or "N/A" as 0.
+    3. Structure tables with clear column headers if the image contains tabular data.
+    4. Be concise and human-friendly.
+    Question: ${query}
+  `;
+
+  let answer = '';
+  try {
+    const gemini = new GoogleGenAIClient(geminiModel, projectId, region);
+    answer = (await gemini.runModelWithObject(topStorageUrl, prompt)) as unknown as string;
+  } catch (err) {
+    console.error('[searchActivity] Gemini analysis failed:', err);
+    answer = 'Visual analysis unavailable.';
+  }
+
+  return { results, answer };
 }

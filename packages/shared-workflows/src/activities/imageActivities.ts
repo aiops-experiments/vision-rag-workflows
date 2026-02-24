@@ -1,70 +1,73 @@
-import { PineconeDbClient } from '../utils/pinecone';
 import { AICohereClientV2 } from '../utils/cohere';
-import { model, indexName } from '../utils/constants'
+import { getVectorDBProvider } from '../providers/vectordb';
 import { InternalServerError } from '../utils/types';
 
-// Activity: Embed image from base64 and store in Pinecone with metadata
-export async function embedImageAndStoreInPinecone(
+/**
+ * Activity: Embed an image (base64) via Cohere and store the vector in the
+ * configured vector DB provider (default: Pinecone).
+ *
+ * @param base64      - base64 data URI of the image
+ * @param storageUrl  - Protocol URL for backend use (gs:// or s3://)
+ * @param imageUrl    - Public HTTP URL served to the browser
+ * @param userId      - Owner user ID
+ * @param namespace   - Logical namespace / collection
+ * @param orgId       - Organisation ID
+ */
+export async function embedImageAndStore(
   base64: string,
-  gcsUrl: string,
+  storageUrl: string,
+  imageUrl: string,
   userId: string,
   namespace: string,
-  orgId: string
+  orgId: string,
 ): Promise<void> {
-  try {
-    console.log('[Activity] Starting image embedding for:', { gcsUrl, userId, namespace, orgId });
+  const indexName =
+    process.env['VECTOR_DB_INDEX_NAME'] ||
+    process.env['PINECONE_INDEX_NAME'] ||
+    'vision-rag';
 
-    // Generate embedding from base64
-    const response = await AICohereClientV2.embed({
-      images: [base64],
-      model: model,
-      inputType: 'image',
-      embeddingTypes: ['float'],
-      outputDimension: 1536
-    });
+  console.log('[imageActivity] Embedding image', { storageUrl, userId, namespace, orgId });
 
-    // Extract embedding from response
-    let embedding: number[] | undefined;
-    if (Array.isArray(response.embeddings)) {
-      // Case: number[][]
-      embedding = response.embeddings[0];
-      console.log('[Activity] Embedding:', embedding);
-    } else if (response.embeddings && Array.isArray(response.embeddings.float)) {
-      // Case: { float: number[][] }
-      embedding = response.embeddings.float[0];
-      console.log('[Activity] Embedding:', embedding);
-    }
+  const response = await AICohereClientV2.embed({
+    images: [base64],
+    model: process.env['COHERE_EMBED_MODEL'] || 'embed-v4.0',
+    inputType: 'image',
+    embeddingTypes: ['float'],
+    outputDimension: 1536,
+  });
 
-    if (!embedding) {
-      throw new InternalServerError('No embeddings generated from Cohere');
-    }
+  let embedding: number[] | undefined;
+  if (Array.isArray(response.embeddings)) {
+    embedding = response.embeddings[0];
+  } else if (response.embeddings && Array.isArray(response.embeddings.float)) {
+    embedding = response.embeddings.float[0];
+  }
 
-    // Validation: check if embedding is valid
-    if (!Array.isArray(embedding) || embedding.length === 0 || embedding.some(v => typeof v !== 'number' || isNaN(v))) {
-      throw new InternalServerError('Embedding is empty or malformed, cannot upsert to Pinecone');
-    }
+  if (
+    !embedding ||
+    !Array.isArray(embedding) ||
+    embedding.length === 0 ||
+    embedding.some((v) => typeof v !== 'number' || isNaN(v))
+  ) {
+    throw new InternalServerError('Embedding is empty or malformed');
+  }
 
-    // Upsert to Pinecone with metadata
-    const index = PineconeDbClient.index("testing");
-    console.log('[Activity] Index:', index);
-    const vector = {
+  const vectorDB = getVectorDBProvider();
+  await vectorDB.upsert(indexName, [
+    {
       id: `${orgId}-${userId}-${Date.now()}-${Math.random().toString(36).slice(2)}`,
       values: embedding,
       metadata: {
-        namespace: namespace,
-        userId: userId,
-        orgId: orgId,
-        gcsUrl: gcsUrl,
+        namespace,
+        userId,
+        orgId,
+        storageUrl,
+        imageUrl,
         type: 'image',
         createdAt: new Date().toISOString(),
       },
-    };
-    console.log('[Activity] Vector:', vector);
-    await index.upsert([vector]);
-    console.log('[Activity] Successfully upserted image to Pinecone:', vector.id);
+    },
+  ]);
 
-  } catch (error) {
-    console.error('[Activity] Image embedding error:', error);
-    throw new InternalServerError('Failed to embed image and store in Pinecone');
-  }
+  console.log('[imageActivity] Upserted vector to', process.env['VECTOR_DB_PROVIDER'] || 'pinecone');
 }

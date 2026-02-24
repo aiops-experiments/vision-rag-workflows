@@ -6,7 +6,6 @@ import { asyncHandler } from '../middleware/errorHandler';
 
 const router = Router();
 
-// Validation schema
 const SearchSchema = z.object({
   query: z.string().min(1, 'Query is required'),
   namespace: z.string().min(1, 'Namespace is required'),
@@ -20,117 +19,86 @@ const SearchQuerySchema = z.object({
   namespace: z.string().min(1, 'Namespace is required'),
   userId: z.string().min(1, 'User ID is required'),
   orgId: z.string().min(1, 'Organization ID is required'),
-  topK: z.string().optional().transform((val) => val ? parseInt(val, 10) : 5),
+  topK: z
+    .string()
+    .optional()
+    .transform((val) => (val ? parseInt(val, 10) : 5)),
 });
 
+function buildResponse(
+  searchResult: Awaited<ReturnType<typeof temporalService.startSearchWorkflow>>,
+  namespace: string,
+): ApiResponse<SearchResponse> {
+  return {
+    success: true,
+    data: {
+      results: searchResult.results.map((r) => ({
+        id: r.id,
+        score: r.score,
+        imageUrl: r.imageUrl,
+        metadata: {
+          ...r.metadata,
+          ...(r.storageUrl && { storageUrl: r.storageUrl }),
+          ...(r.imageUrl && { imageUrl: r.imageUrl }),
+        },
+      })),
+      query: searchResult.query,
+      answer: searchResult.answer,
+      namespace,
+      totalResults: searchResult.totalResults,
+    },
+    message: `Found ${searchResult.totalResults} similar results`,
+  };
+}
+
 /**
- * @route POST /api/search
- * @desc Workflow C - Search for similar vectors (POST version)
+ * POST /api/search
  */
 router.post('/', asyncHandler(async (req: Request, res: Response) => {
-  // Validate request body
   const validation = SearchSchema.safeParse(req.body);
   if (!validation.success) {
     return res.status(400).json({
       success: false,
       error: 'Validation failed',
-      details: validation.error.issues
+      details: validation.error.issues,
     });
   }
 
   const { query, namespace, userId, orgId, topK } = validation.data;
+  const searchResult = await temporalService.startSearchWorkflow({
+    query,
+    namespace,
+    userId,
+    orgId,
+    topK,
+  });
 
-  try {
-    // Start temporal search workflow
-    const searchResult = await temporalService.startSearchWorkflow({
-      query,
-      namespace,
-      userId,
-      orgId,
-      topK
-    });
-
-    const response: ApiResponse<SearchResponse> = {
-      success: true,
-      data: {
-        results: searchResult.results.map(result => ({
-          id: result.id,
-          score: result.score,
-          metadata: {
-            ...result.metadata,
-            ...(result.gcsUrl && { gcsUrl: result.gcsUrl })
-          }
-        })),
-        query: searchResult.query,
-        namespace,
-        totalResults: searchResult.totalResults,
-      },
-      message: `Found ${searchResult.totalResults} similar results`,
-    };
-
-    res.status(200).json(response);
-  } catch (error) {
-    console.error('Search error:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Failed to search vectors',
-    });
-  }
+  res.status(200).json(buildResponse(searchResult, namespace));
 }));
 
 /**
- * @route GET /api/search
- * @desc Workflow C - Search for similar vectors (GET version with query params)
+ * GET /api/search
  */
 router.get('/', asyncHandler(async (req: Request, res: Response) => {
-  // Validate query parameters
   const validation = SearchQuerySchema.safeParse(req.query);
   if (!validation.success) {
     return res.status(400).json({
       success: false,
       error: 'Validation failed',
-      details: validation.error.issues
+      details: validation.error.issues,
     });
   }
 
   const { query, namespace, userId, orgId, topK } = validation.data;
+  const searchResult = await temporalService.startSearchWorkflow({
+    query,
+    namespace,
+    userId,
+    orgId,
+    topK,
+  });
 
-  try {
-    // Start temporal search workflow
-    const searchResult = await temporalService.startSearchWorkflow({
-      query,
-      namespace,
-      userId,
-      orgId,
-      topK
-    });
-
-    const response: ApiResponse<SearchResponse> = {
-      success: true,
-      data: {
-        results: searchResult.results.map(result => ({
-          id: result.id,
-          score: result.score,
-          metadata: {
-            ...result.metadata,
-            ...(result.gcsUrl && { gcsUrl: result.gcsUrl })
-          }
-        })),
-        query: searchResult.query,
-        namespace,
-        totalResults: searchResult.totalResults,
-      },
-      message: `Found ${searchResult.totalResults} similar results`,
-    };
-
-    res.status(200).json(response);
-  } catch (error) {
-    console.error('Search error:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Failed to search vectors',
-    });
-  }
+  res.status(200).json(buildResponse(searchResult, namespace));
 }));
 
 export { router as searchRoutes };
